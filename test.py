@@ -16,6 +16,7 @@ from catboost import CatBoostClassifier
 from sklearn.neural_network import MLPClassifier
 from feature_selection import *
 
+
 CONFIGURATIONS = [
     (LogisticRegression, [{'C': [0.001, 0.01, 0.1, 1, 10, 100], 'penalty': ['l1', 'l2'], 'solver': ['liblinear', 'saga']}]),
     (SVC, [{'C': [0.1, 1, 10, 100], 'kernel': ['linear', 'rbf', 'poly', 'sigmoid'], 'gamma': ['scale', 'auto']}]),
@@ -259,10 +260,12 @@ def main():
 
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
     
-    lasso_feature_selection(X_train, y_train)
+    # Feature selection using LASSO
+    selected_features = lasso_feature_selection(X_train, y_train)
 
-
-    clf = RandomForestClassifier(random_state=42, max_depth=10, n_estimators=50, min_samples_leaf=2, min_samples_split=10)
+    # DO NESTED CV TO SELECT THE BEST MODEL AND HYPERPARAMETERS 
+    # IF CLASS WEIGHT IS NOT WORKING AND I STILL HAVE VERY LOW RECALL USE SMOTE
+    clf = RandomForestClassifier(random_state=42, max_depth=10, n_estimators=50, min_samples_leaf=2, min_samples_split=10, class_weight='balanced')
     
     # perform cross-validation
     # cv = StratifiedKFold(n_splits=10, shuffle=True, random_state=42)
