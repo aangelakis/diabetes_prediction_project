@@ -15,6 +15,9 @@ from lightgbm import LGBMClassifier
 from catboost import CatBoostClassifier
 from sklearn.neural_network import MLPClassifier
 from feature_selection import *
+from sklearn.model_selection import ParameterGrid
+from cross_validation import *
+
 
 
 CONFIGURATIONS = [
@@ -265,26 +268,30 @@ def main():
 
     # DO NESTED CV TO SELECT THE BEST MODEL AND HYPERPARAMETERS 
     # IF CLASS WEIGHT IS NOT WORKING AND I STILL HAVE VERY LOW RECALL USE SMOTE
-    clf = RandomForestClassifier(random_state=42, max_depth=10, n_estimators=50, min_samples_leaf=2, min_samples_split=10, class_weight='balanced')
+    nested_CV(X_train[selected_features], y_train, CONFIGURATIONS, outer_k_folds=10, inner_k_folds=5)   
+
+
+    # clf = RandomForestClassifier(random_state=42, max_depth=10, n_estimators=50, min_samples_leaf=2, min_samples_split=10, class_weight='balanced')
     
+
     # perform cross-validation
     # cv = StratifiedKFold(n_splits=10, shuffle=True, random_state=42)
     # stratified_kfold_cv(X, y, clf, cv)
 
-    clf.fit(X_train, y_train)
-    y_pred = clf.predict(X_test)
-    y_pred_proba = clf.predict_proba(X_test)[:, 1]
-    y_pred_trivial = trivial_predict(trivial_train(X_train, y_train), X_test)
+    # clf.fit(X_train, y_train)
+    # y_pred = clf.predict(X_test)
+    # y_pred_proba = clf.predict_proba(X_test)[:, 1]
+    # y_pred_trivial = trivial_predict(trivial_train(X_train, y_train), X_test)
 
-    plot_confusion_matrix(y_test, y_pred, title='Confusion Matrix')
-    plot_roc_curve(y_test, y_pred_proba, y_pred_trivial, title='ROC Curve')
+    # plot_confusion_matrix(y_test, y_pred, title='Confusion Matrix')
+    # plot_roc_curve(y_test, y_pred_proba, y_pred_trivial, title='ROC Curve')
 
-    print(f'Accuracy: {accuracy_score(y_test, y_pred)}')
-    print(f'AUC: {roc_auc_score(y_test, y_pred_proba)}')
-    print(f'F1: {f1_score(y_test, y_pred)}')
-    print(f'Precision: {precision_score(y_test, y_pred)}')
-    print(f'Recall: {recall_score(y_test, y_pred)}')
-    print(f'Balanced Accuracy: {balanced_accuracy_score(y_test, y_pred)}')
+    # print(f'Accuracy: {accuracy_score(y_test, y_pred)}')
+    # print(f'AUC: {roc_auc_score(y_test, y_pred_proba)}')
+    # print(f'F1: {f1_score(y_test, y_pred)}')
+    # print(f'Precision: {precision_score(y_test, y_pred)}')
+    # print(f'Recall: {recall_score(y_test, y_pred)}')
+    # print(f'Balanced Accuracy: {balanced_accuracy_score(y_test, y_pred)}')
     
 
 if __name__ == '__main__':
