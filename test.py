@@ -11,6 +11,22 @@ import seaborn as sns
 import os
 from xgboost import XGBClassifier
 from tqdm import tqdm
+from lightgbm import LGBMClassifier 
+from catboost import CatBoostClassifier
+from sklearn.neural_network import MLPClassifier
+from feature_selection import *
+
+CONFIGURATIONS = [
+    (LogisticRegression, [{'C': [0.001, 0.01, 0.1, 1, 10, 100], 'penalty': ['l1', 'l2'], 'solver': ['liblinear', 'saga']}]),
+    (SVC, [{'C': [0.1, 1, 10, 100], 'kernel': ['linear', 'rbf', 'poly', 'sigmoid'], 'gamma': ['scale', 'auto']}]),
+    (RandomForestClassifier, [{'n_estimators': [50, 100, 200], 'max_depth': [None, 5, 10, 20], 'min_samples_split': [2, 5, 10]}]),
+    (XGBClassifier, [{'learning_rate': [0.01, 0.1, 0.2], 'n_estimators': [50, 100, 200], 'max_depth': [3, 5, 7]}]),
+    (LGBMClassifier, [{'learning_rate': [0.01, 0.1, 0.2], 'n_estimators': [50, 100, 200], 'num_leaves': [31, 50, 100]}]),
+    (CatBoostClassifier, [{'learning_rate': [0.01, 0.1, 0.2], 'iterations': [100, 200, 500], 'depth': [4, 6, 10]}]),
+    (MLPClassifier, [{'hidden_layer_sizes': [(50,), (100,), (100, 50)], 'activation': ['relu', 'tanh'], 'alpha': [0.0001, 0.001]}])
+]
+
+
 
 def plot_roc_curve(y_test, y_pred_proba, y_pred_trivial, title='ROC Curve'):
     """
@@ -162,44 +178,39 @@ def load_preprocess_data(path):
     """
     df = pd.read_csv(path)
     print(df.head())
-    plt.figure(figsize=(10, 6))
-    plt.scatter(df.iloc[:, 1], df.iloc[:, 5], c=df.iloc[:, -1], cmap='coolwarm')
-    plt.xlabel('Glucose')
-    plt.ylabel('BMI')
-    plt.title('Scatter plot of Glucose vs BMI')
-    plt.colorbar()
-    plt.show()
-    # Check for missing values
-    print(df.isna().sum())
-           
-    categorical_indices = [0, 4]
-    numerical_indices = [1, 5, 6, 7]
-    binary_indices = [2, 3]
     
+    # Check for missing values
+    print(df.isnull().sum())
+
+    # Remove the 'OTHER' gender
+    df.loc[~df['gender'].isin(['Male', 'Female']), 'gender'] = None
+    df.dropna(inplace=True)
+    
+    # One-hot encode the gender variable
+    df = pd.get_dummies(df, columns=['gender'], drop_first=True)
+
+    # Frequency encode the smoking_history variable
+    df['smoking_history'] = df['smoking_history'].map(df['smoking_history'].value_counts(normalize=True))
+    
+    # Reorder columns: Move dummy variables next to original position
+    col_order = ['gender_Male', 'age', 'hypertension', 'heart_disease', 'smoking_history', 'bmi', 'HbA1c_level', 'blood_glucose_level', 'diabetes']
+    df = df[col_order]  # Manually reorder
+        
     target = df.iloc[:, -1]     # Last column
     class_distribution = target.value_counts(normalize=True).to_dict()
     print(f'Class distribution: {class_distribution}')  # Print the class distribution (percentage of each class in the dataset)
     if class_distribution[0]/class_distribution[1] > 2:
         print('Heavily Imbalanced Dataset')
 
-    oh_encoder = OneHotEncoder(sparse_output=False)
+    numeric_features = ['age', 'bmi', 'HbA1c_level', 'blood_glucose_level']
     scaler = StandardScaler() 
 
-    categorical_features = df.iloc[:, categorical_indices]
-    numerical_features = df.iloc[:, numerical_indices]
-    binary_features = df.iloc[:, binary_indices]
-
-    # Preprocess the categorical features
-    encoded_categorical_features = oh_encoder.fit_transform(categorical_features)
-
-    # Preprocess the numerical features
-    encoded_numerical_features = scaler.fit_transform(numerical_features)
-
-    # Concatenate the preprocessed features
-    X = np.concatenate([encoded_categorical_features, encoded_numerical_features, binary_features], axis=1)
-    y = target.values
+    df[numeric_features] = scaler.fit_transform(df[numeric_features])
+    print(df.head())
     
-    print(f'Preprocessed features shape: {X.shape}, target shape: {y.shape}')
+    print(f'Preprocessed dataset shape: {df.shape}')
+    X = df.iloc[:, :-1]
+    y = df.iloc[:, -1]
     return X, y
 
 
@@ -247,6 +258,9 @@ def main():
     X, y = load_preprocess_data('diabetes_prediction_dataset.csv')
 
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+    
+    lasso_feature_selection(X_train, y_train)
+
 
     clf = RandomForestClassifier(random_state=42, max_depth=10, n_estimators=50, min_samples_leaf=2, min_samples_split=10)
     
