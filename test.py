@@ -20,14 +20,19 @@ from cross_validation import *
 
 
 
+negative_count = (y == 0).sum()
+positive_count = (y == 1).sum()
+scale_pos_weight = negative_count / positive_count
+
+
 CONFIGURATIONS = [
-    (LogisticRegression, [{'C': [0.001, 0.01, 0.1, 1, 10, 100], 'penalty': ['l1', 'l2'], 'solver': ['liblinear', 'saga']}]),
-    (SVC, [{'C': [0.1, 1, 10, 100], 'kernel': ['linear', 'rbf', 'poly', 'sigmoid'], 'gamma': ['scale', 'auto']}]),
-    (RandomForestClassifier, [{'n_estimators': [50, 100, 200], 'max_depth': [None, 5, 10, 20], 'min_samples_split': [2, 5, 10]}]),
-    (XGBClassifier, [{'learning_rate': [0.01, 0.1, 0.2], 'n_estimators': [50, 100, 200], 'max_depth': [3, 5, 7]}]),
-    (LGBMClassifier, [{'learning_rate': [0.01, 0.1, 0.2], 'n_estimators': [50, 100, 200], 'num_leaves': [31, 50, 100]}]),
-    (CatBoostClassifier, [{'learning_rate': [0.01, 0.1, 0.2], 'iterations': [100, 200, 500], 'depth': [4, 6, 10]}]),
-    (MLPClassifier, [{'hidden_layer_sizes': [(50,), (100,), (100, 50)], 'activation': ['relu', 'tanh'], 'alpha': [0.0001, 0.001]}])
+    (LogisticRegression, [{'C': [0.001, 0.01, 0.1, 1, 10, 100], 'penalty': ['l1', 'l2'], 'solver': ['liblinear', 'saga'], 'class_weight': ['balanced']}]),
+    (SVC, [{'C': [0.1, 1, 10, 100], 'kernel': ['linear', 'rbf', 'poly', 'sigmoid'], 'gamma': ['scale', 'auto'], 'class_weight': ['balanced']}]),
+    (RandomForestClassifier, [{'n_estimators': [50, 100, 200], 'max_depth': [None, 5, 10, 20], 'min_samples_split': [2, 5, 10], 'class_weight': ['balanced']}]),
+    (XGBClassifier, [{'learning_rate': [0.01, 0.1, 0.2], 'n_estimators': [50, 100, 200], 'max_depth': [3, 5, 7], 'scale_pos_weight': [scale_pos_weight]}]),
+    (LGBMClassifier, [{'learning_rate': [0.01, 0.1, 0.2], 'n_estimators': [50, 100, 200], 'num_leaves': [31, 50, 100], 'is_unbalance': [True]}]),
+    (CatBoostClassifier, [{'learning_rate': [0.01, 0.1, 0.2], 'iterations': [100, 200, 500], 'depth': [4, 6, 10], 'auto_class_weights': ['Balanced']}]),
+    (MLPClassifier, [{'hidden_layer_sizes': [(50,), (100,), (100, 50)], 'activation': ['relu', 'tanh'], 'alpha': [0.0001, 0.001], 'class_weight': ['balanced']}])
 ]
 
 
@@ -268,31 +273,12 @@ def main():
 
     # DO NESTED CV TO SELECT THE BEST MODEL AND HYPERPARAMETERS 
     # IF CLASS WEIGHT IS NOT WORKING AND I STILL HAVE VERY LOW RECALL USE SMOTE
-    nested_CV(X_train[selected_features], y_train, CONFIGURATIONS, outer_k_folds=10, inner_k_folds=5)   
+    best_configuration, best_clf = nested_CV(X_train[selected_features], y_train, CONFIGURATIONS, outer_k_folds=10, inner_k_folds=5)   
 
-
-    # clf = RandomForestClassifier(random_state=42, max_depth=10, n_estimators=50, min_samples_leaf=2, min_samples_split=10, class_weight='balanced')
-    
-
-    # perform cross-validation
-    # cv = StratifiedKFold(n_splits=10, shuffle=True, random_state=42)
-    # stratified_kfold_cv(X, y, clf, cv)
-
-    # clf.fit(X_train, y_train)
-    # y_pred = clf.predict(X_test)
-    # y_pred_proba = clf.predict_proba(X_test)[:, 1]
-    # y_pred_trivial = trivial_predict(trivial_train(X_train, y_train), X_test)
-
-    # plot_confusion_matrix(y_test, y_pred, title='Confusion Matrix')
-    # plot_roc_curve(y_test, y_pred_proba, y_pred_trivial, title='ROC Curve')
-
-    # print(f'Accuracy: {accuracy_score(y_test, y_pred)}')
-    # print(f'AUC: {roc_auc_score(y_test, y_pred_proba)}')
-    # print(f'F1: {f1_score(y_test, y_pred)}')
-    # print(f'Precision: {precision_score(y_test, y_pred)}')
-    # print(f'Recall: {recall_score(y_test, y_pred)}')
-    # print(f'Balanced Accuracy: {balanced_accuracy_score(y_test, y_pred)}')
-    
+    # Evaluate the best model on the test set, chehck GPT's answer for more
+    # also compare class_weight with SMOTE
+    y_pred_proba = best_clf.predict_proba(X_test[selected_features])[:, 1]
+        
 
 if __name__ == '__main__':
     main()

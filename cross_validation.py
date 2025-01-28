@@ -81,4 +81,7 @@ def nested_CV(X, y, configurations, outer_k_folds=10, inner_k_folds=5):
     print(f"  Parameters: {best_configuration['params']}")
     print(f"  Average AUC: {np.mean(outer_scores):.3f}")
 
-    return best_configuration
+    best_clf = best_configuration['model'](**best_configuration['params'])
+    best_clf.fit(X, y)
+
+    return best_configuration, best_clf
