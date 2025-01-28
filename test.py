@@ -11,8 +11,6 @@ import seaborn as sns
 import os
 from xgboost import XGBClassifier
 from tqdm import tqdm
-from lightgbm import LGBMClassifier 
-from catboost import CatBoostClassifier
 from sklearn.neural_network import MLPClassifier
 from feature_selection import *
 from sklearn.model_selection import ParameterGrid
@@ -262,8 +260,6 @@ def main():
         (SVC, [{'C': [0.1, 1, 10, 100], 'kernel': ['linear', 'rbf', 'poly', 'sigmoid'], 'gamma': ['scale', 'auto'], 'class_weight': ['balanced']}]),
         (RandomForestClassifier, [{'n_estimators': [50, 100, 200], 'max_depth': [None, 5, 10, 20], 'min_samples_split': [2, 5, 10], 'class_weight': ['balanced']}]),
         (XGBClassifier, [{'learning_rate': [0.01, 0.1, 0.2], 'n_estimators': [50, 100, 200], 'max_depth': [3, 5, 7], 'scale_pos_weight': [scale_pos_weight]}]),
-        (LGBMClassifier, [{'learning_rate': [0.01, 0.1, 0.2], 'n_estimators': [50, 100, 200], 'num_leaves': [31, 50, 100], 'is_unbalance': [True]}]),
-        (CatBoostClassifier, [{'learning_rate': [0.01, 0.1, 0.2], 'iterations': [100, 200, 500], 'depth': [4, 6, 10], 'auto_class_weights': ['Balanced']}]),
         (MLPClassifier, [{'hidden_layer_sizes': [(50,), (100,), (100, 50)], 'activation': ['relu', 'tanh'], 'alpha': [0.0001, 0.001], 'class_weight': ['balanced']}])
     ]
 
