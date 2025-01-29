@@ -47,10 +47,11 @@ def lasso_feature_selection(X, y):
     print("Column Names: {}".format(names.values))
 
     # plotting the Column Names and Importance of Columns. 
-    plt.figure(figsize=(10, 6))
+    plt.figure(figsize=(12, 6))
     plt.bar(names, best_lasso_coef)
-    plt.xticks(rotation=90)
-    plt.grid()
+    plt.xticks(rotation=45, ha='right', fontsize=12)
+    plt.yticks(fontsize=12)
+    plt.grid(axis='y', linestyle='--', alpha=0.6)
     plt.title("Feature Selection Based on Lasso")
     plt.xlabel("Features")
     plt.ylabel("Importance")
