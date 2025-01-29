@@ -54,8 +54,9 @@ def lasso_feature_selection(X, y):
     plt.xlabel("Features")
     plt.ylabel("Importance")
     plt.ylim(0, 0.15)
-    plt.show()
-    
+    # plt.show() 
+    plt.savefig('lasso_feature_selection.png')
+    plt.close()
 
     # Subsetting the features which has more than 0.001 importance.
     feature_subset=np.array(names)[best_lasso_coef>0.005]
