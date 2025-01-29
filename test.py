@@ -47,15 +47,15 @@ def load_preprocess_data(path):
     df.dropna(inplace=True)
     
     # One-hot encode the gender variable
-    df = pd.get_dummies(df, columns=['gender'], drop_first=True)
+    df = pd.get_dummies(df, columns=['gender'], drop_first=True)   
+    df['gender_Male'] = df['gender_Male'].astype(int)
 
     # Frequency encode the smoking_history variable
     df['smoking_history'] = df['smoking_history'].map(df['smoking_history'].value_counts(normalize=True))
-    
     # Reorder columns: Move dummy variables next to original position
     col_order = ['gender_Male', 'age', 'hypertension', 'heart_disease', 'smoking_history', 'bmi', 'HbA1c_level', 'blood_glucose_level', 'diabetes']
     df = df[col_order]  # Manually reorder
-        
+
     target = df.iloc[:, -1]     # Last column
     class_distribution = target.value_counts(normalize=True).to_dict()
     print(f'Class distribution: {class_distribution}')  # Print the class distribution (percentage of each class in the dataset)
@@ -85,7 +85,9 @@ def main():
     # Feature selection using LASSO
     selected_features = lasso_feature_selection(X_train, y_train)
     
-    # APPLY SMOTE ONLY FOR TRAIN SET
+    # Feature selection using backward elimination algorithm
+    # selected_features = backward_elimination(X_train, y_train, threshold=0.05)
+
     if SMOTE_FLAG:
         print('Using SMOTE to balance the classes in the training set')
         smote = SMOTE(random_state=42)

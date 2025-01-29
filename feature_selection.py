@@ -1,10 +1,10 @@
-from sklearn.feature_selection import SelectFromModel
 from sklearn.linear_model import Lasso
-from sklearn.preprocessing import StandardScaler
 import pandas as pd
 from sklearn.model_selection import GridSearchCV, KFold
 import numpy as np
 import matplotlib.pyplot as plt
+import statsmodels.api as sm
+
 
 def lasso_feature_selection(X, y):
     """
@@ -64,3 +64,50 @@ def lasso_feature_selection(X, y):
     selected_features = list(feature_subset)
     print("Selected Features: {}".format(selected_features))
     return selected_features
+
+
+def backward_elimination(X, y, threshold=0.05):
+    """
+    Perform feature selection using Backward Elimination with OLS regression.
+
+    Parameters
+    ----------
+    X : pandas.DataFrame or numpy.array
+        The feature matrix.
+    y : pandas.DataFrame or numpy.array
+        The target vector.
+    threshold : float, optional
+        The p-value threshold for feature selection (default is 0.05).
+
+    Returns
+    -------
+    selected_features : list
+        The names of the features that were selected.
+    """
+    X = pd.DataFrame(X)
+    X = sm.add_constant(X)  # Add intercept term
+    y = pd.Series(y)
+    print(X)
+
+    while True:
+        model = sm.OLS(y, X).fit()
+        print(model.summary())
+        p_values = model.pvalues
+
+        
+        # Find the feature with the highest p-value (excluding intercept)
+        max_p_value = p_values.drop('const').max()
+        worst_feature = p_values.drop('const').idxmax()
+
+        # If the highest p-value is above the threshold, drop that feature
+        if max_p_value > threshold:
+            print(f"Removing {worst_feature} with p-value {max_p_value:.4f}")
+            X = X.drop(columns=[worst_feature])
+        else:
+            break  # Stop when all features have p-values below the threshold
+
+    selected_features = X.columns.tolist()
+    selected_features.remove('const')  # Remove intercept from final feature list
+    print("Selected Features using Backward Elimination:", selected_features)
+    return selected_features
+
