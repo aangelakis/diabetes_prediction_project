@@ -59,7 +59,7 @@ def nested_CV(X, y, configurations, outer_k_folds=10, inner_k_folds=5):
 
     # Outer loop
     for fold_idx, (train_idx, test_idx) in enumerate(tqdm(outer_cv.split(X, y), desc="Outer folds", total=outer_k_folds)):
-
+        print('Fold:', fold_idx + 1)
         X_train, X_test = X.iloc[train_idx], X.iloc[test_idx]
         y_train, y_test = y.iloc[train_idx], y.iloc[test_idx]
 
@@ -122,6 +122,7 @@ def nested_CV(X, y, configurations, outer_k_folds=10, inner_k_folds=5):
             best_configuration['params'] = best_inner_params
             best_configuration['average_auc'] = outer_metrics['roc_auc']
 
+        print('Finished fold:', fold_idx + 1)
     # Create a DataFrame of results
     results_df = pd.DataFrame(results_per_fold)
     
