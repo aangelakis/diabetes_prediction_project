@@ -99,6 +99,7 @@ def plot_feature_importance(names, importances, title='Feature Importance'):
     """
     # Create a DataFrame of feature names and importances
     df = pd.DataFrame({'Feature': names, 'Importance': importances})
+    print(df.head())
     # Sort the features by importance
     df = df.sort_values('Importance', ascending=False)
     # Plot the feature importances
@@ -114,3 +115,20 @@ def plot_feature_importance(names, importances, title='Feature Importance'):
     plt.savefig(f'feature_importance/{title}.png')
     # Close the plot
     plt.close()
+
+
+def plot_feature_selection(names, best_lasso_coef):
+
+    # plotting the Column Names and Importance of Columns. 
+    plt.figure(figsize=(12, 10))
+    plt.bar(names, best_lasso_coef)
+    plt.xticks(rotation=45, ha='right', fontsize=12)
+    plt.yticks(fontsize=12)
+    plt.grid(axis='y', linestyle='--', alpha=0.6)
+    plt.title("Feature Selection Based on Lasso")
+    plt.xlabel("Features")
+    plt.ylabel("Importance")
+    plt.ylim(0, 0.15)
+    plt.savefig('lasso_feature_selection.png')
+    plt.close()
+

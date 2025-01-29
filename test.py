@@ -201,7 +201,6 @@ def main():
     # Save to CSV
     metric_values_df.to_csv(metric_values_title, index=False)
 
-
     # Plot the ROC curve for the test set
     trivia_model = trivial_train(X_train[selected_features], y_train)
     y_pred_trivial = trivial_predict(trivia_model, X_test[selected_features])

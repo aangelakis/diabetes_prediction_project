@@ -4,7 +4,7 @@ from sklearn.model_selection import GridSearchCV, KFold
 import numpy as np
 import matplotlib.pyplot as plt
 import statsmodels.api as sm
-
+from plot_functions import plot_feature_selection
 
 def lasso_feature_selection(X, y):
     """
@@ -46,19 +46,7 @@ def lasso_feature_selection(X, y):
     names=X.columns
     print("Column Names: {}".format(names.values))
 
-    # plotting the Column Names and Importance of Columns. 
-    plt.figure(figsize=(12, 6))
-    plt.bar(names, best_lasso_coef)
-    plt.xticks(rotation=45, ha='right', fontsize=12)
-    plt.yticks(fontsize=12)
-    plt.grid(axis='y', linestyle='--', alpha=0.6)
-    plt.title("Feature Selection Based on Lasso")
-    plt.xlabel("Features")
-    plt.ylabel("Importance")
-    plt.ylim(0, 0.15)
-    # plt.show() 
-    plt.savefig('lasso_feature_selection.png')
-    plt.close()
+    plot_feature_selection(names, best_lasso_coef)
 
     # Subsetting the features which has more than 0.001 importance.
     feature_subset=np.array(names)[best_lasso_coef>0.005]
