@@ -47,6 +47,7 @@ def lasso_feature_selection(X, y):
     print("Column Names: {}".format(names.values))
 
     # plotting the Column Names and Importance of Columns. 
+    plt.figure(figsize=(10, 6))
     plt.bar(names, best_lasso_coef)
     plt.xticks(rotation=90)
     plt.grid()

@@ -7,6 +7,7 @@ from sklearn.svm import SVC
 from xgboost import XGBClassifier
 from feature_selection import *
 from cross_validation import *
+from plot_functions import *
 from sklearn.tree import DecisionTreeClassifier
 from imblearn.over_sampling import SMOTE
 from imblearn.under_sampling import RandomUnderSampler
@@ -14,8 +15,8 @@ from sklearn.naive_bayes import GaussianNB
 from sklearn.model_selection import train_test_split
 from sklearn.neighbors import KNeighborsClassifier
 
-WEIGHT_BALANCE = False
-SMOTE_FLAG = True
+WEIGHT_BALANCE = True
+SMOTE_FLAG = False
 UNDERSAMPLING = False
 
 
@@ -117,6 +118,7 @@ def main():
         results_per_fold_title = 'results_per_fold_with_class_weight.csv'
         metric_values_title = 'metric_values_with_class_weight.csv'
         best_config_title = 'best_configuration_with_class_weight.csv'
+        feautre_importance_title = 'feature_importance_with_class_weight'
     else:
         configurations = [
             (LogisticRegression, [{'C': [0.001, 0.01, 0.1, 1, 10, 100], 'penalty': ['l1', 'l2'], 'solver': ['liblinear', 'saga']}]),
@@ -133,12 +135,14 @@ def main():
             results_per_fold_title = 'results_per_fold_with_smote.csv'
             metric_values_title = 'metric_values_with_smote.csv'
             best_config_title = 'best_configuration_with_smote.csv'
+            feautre_importance_title = 'feature_importance_with_smote'
         elif UNDERSAMPLING:
             confusion_matrix_title = 'Test Confusion Matrix with Random Undersampling'
             roc_curve_title = 'Test ROC Curve with Random Undersampling'
             results_per_fold_title = 'results_per_fold_with_undersampling.csv'
             metric_values_title = 'metric_values_with_undersampling.csv'
             best_config_title = 'best_configuration_with_undersampling.csv'
+            feautre_importance_title = 'feature_importance_with_undersampling'
         else:
             print('No class weight or SMOTE applied')
             confusion_matrix_title = 'Test Confusion Matrix without Class Weight or SMOTE'
@@ -146,9 +150,12 @@ def main():
             results_per_fold_title = 'results_per_fold_without_class_weight_or_SMOTE.csv'
             metric_values_title = 'metric_values_without_class_weight_or_SMOTE.csv'
             best_config_title = 'best_configuration_without_class_weight_or_SMOTE.csv'
+            feautre_importance_title = 'feature_importance_without_class_weight_or_SMOTE'
 
 
     results_per_fold, best_configuration, best_clf = nested_CV(X_train[selected_features], y_train, configurations, outer_k_folds=10, inner_k_folds=5)   
+
+    plot_feature_importance(best_clf, selected_features, title=feautre_importance_title)
 
     print(f'RESULTS PER OUTER FOLD: {results_per_fold}')
     results_per_fold.to_csv(results_per_fold_title, index=False)

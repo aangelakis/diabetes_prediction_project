@@ -2,7 +2,7 @@ from sklearn.metrics import roc_curve, confusion_matrix
 import matplotlib.pyplot as plt
 import os
 import seaborn as sns
-
+import pandas as pd
 
 def plot_roc_curve(y_test, y_pred_proba, y_pred_trivial, title='ROC Curve'):
     """
@@ -82,3 +82,35 @@ def plot_confusion_matrix(y_test, y_pred, title='Confusion Matrix'):
 
     # Return the confusion matrix
     return cm 
+
+
+def plot_feature_importance(names, importances, title='Feature Importance'):
+    """
+    Plot the feature importances for a given set of feature names.
+
+    Parameters
+    ----------
+    names : list
+        The names of the features.
+    importances : list
+        The importances of the features.
+    title : str, optional
+        The title of the plot (default is 'Feature Importance').
+    """
+    # Create a DataFrame of feature names and importances
+    df = pd.DataFrame({'Feature': names, 'Importance': importances})
+    # Sort the features by importance
+    df = df.sort_values('Importance', ascending=False)
+    # Plot the feature importances
+    plt.figure(figsize=(10, 6))
+    sns.barplot(x='Importance', y='Feature', data=df)
+    plt.xlabel('Importance')
+    plt.ylabel('Feature')
+    plt.title(title)
+    plt.tight_layout()
+    # Save the plot
+    if not os.path.exists('feature_importance'):
+        os.makedirs('feature_importance')
+    plt.savefig(f'feature_importance/{title}.png')
+    # Close the plot
+    plt.close()
