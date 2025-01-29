@@ -12,11 +12,11 @@ from imblearn.over_sampling import SMOTE
 from imblearn.under_sampling import RandomUnderSampler
 from sklearn.naive_bayes import GaussianNB
 from sklearn.model_selection import train_test_split
-
+from sklearn.neighbors import KNeighborsClassifier
 
 WEIGHT_BALANCE = False
-SMOTE_FLAG = False
-UNDERSAMPLING = True
+SMOTE_FLAG = True
+UNDERSAMPLING = False
 
 
 def load_preprocess_data(path):
@@ -105,41 +105,45 @@ def main():
 
         configurations = [
             (LogisticRegression, [{'C': [0.001, 0.01, 0.1, 1, 10, 100], 'penalty': ['l1', 'l2'], 'solver': ['liblinear', 'saga'], 'class_weight': ['balanced']}]),
-            # (SVC, [{'C': [0.1, 1, 10, 100], 'kernel': ['linear', 'rbf', 'poly', 'sigmoid'], 'gamma': ['scale', 'auto'], 'class_weight': ['balanced']}]),
-            # (RandomForestClassifier, [{'n_estimators': [50, 100, 200], 'max_depth': [None, 5, 10, 20], 'min_samples_split': [2, 5, 10], 'class_weight': ['balanced']}]),
-            # (XGBClassifier, [{'learning_rate': [0.01, 0.1, 0.2], 'n_estimators': [50, 100, 200], 'max_depth': [3, 5, 7], 'scale_pos_weight': [scale_pos_weight]}]),
-            # (DecisionTreeClassifier, [{'max_depth': [None, 5, 10, 20], 'min_samples_split': [2, 5, 10], 'class_weight': ['balanced']}])
+            (SVC, [{'C': [0.1, 1, 10, 100], 'kernel': ['linear', 'rbf', 'poly', 'sigmoid'], 'gamma': ['scale', 'auto'], 'class_weight': ['balanced']}]),
+            (RandomForestClassifier, [{'n_estimators': [50, 100, 200], 'max_depth': [None, 5, 10, 20], 'min_samples_split': [2, 5, 10], 'class_weight': ['balanced']}]),
+            (XGBClassifier, [{'learning_rate': [0.01, 0.1, 0.2], 'n_estimators': [50, 100, 200], 'max_depth': [3, 5, 7], 'scale_pos_weight': [scale_pos_weight]}]),
+            (DecisionTreeClassifier, [{'max_depth': [None, 5, 10, 20], 'min_samples_split': [2, 5, 10], 'class_weight': ['balanced']}])
         ]
         confusion_matrix_title = 'Test Confusion Matrix with Class Weight'
         roc_curve_title = 'Test ROC Curve with Class Weight'
         results_per_fold_title = 'results_per_fold_with_class_weight.csv'
         metric_values_title = 'metric_values_with_class_weight.csv'
+        best_config_title = 'best_configuration_with_class_weight.csv'
     else:
         configurations = [
             (LogisticRegression, [{'C': [0.001, 0.01, 0.1, 1, 10, 100], 'penalty': ['l1', 'l2'], 'solver': ['liblinear', 'saga']}]),
-            # (SVC, [{'C': [0.1, 1, 10, 100], 'kernel': ['linear', 'rbf', 'poly', 'sigmoid'], 'gamma': ['scale', 'auto']}]),
-            # (RandomForestClassifier, [{'n_estimators': [50, 100, 200], 'max_depth': [None, 5, 10, 20]}]),
-            # (XGBClassifier, [{'learning_rate': [0.01, 0.1, 0.2], 'n_estimators': [50, 100, 200], 'max_depth': [3, 5, 7]}]),
-            # (DecisionTreeClassifier, [{'max_depth': [None, 5, 10, 20], 'min_samples_split': [2, 5, 10]}]),
-            # (KNeighborsClassifier, [{'n_neighbors': [3, 5, 7, 9], 'weights': ['uniform', 'distance'], 'metric': ['euclidean', 'manhattan', 'minkowski']}]),
-            # (GaussianNB, [{'var_smoothing': [1e-9, 1e-8, 1e-7, 1e-6, 1e-5]}])
+            (SVC, [{'C': [0.1, 1, 10, 100], 'kernel': ['linear', 'rbf', 'poly', 'sigmoid'], 'gamma': ['scale', 'auto']}]),
+            (RandomForestClassifier, [{'n_estimators': [50, 100, 200], 'max_depth': [None, 5, 10, 20]}]),
+            (XGBClassifier, [{'learning_rate': [0.01, 0.1, 0.2], 'n_estimators': [50, 100, 200], 'max_depth': [3, 5, 7]}]),
+            (DecisionTreeClassifier, [{'max_depth': [None, 5, 10, 20], 'min_samples_split': [2, 5, 10]}]),
+            (KNeighborsClassifier, [{'n_neighbors': [3, 5, 7, 9], 'weights': ['uniform', 'distance'], 'metric': ['euclidean', 'manhattan', 'minkowski']}]),
+            (GaussianNB, [{'var_smoothing': [1e-9, 1e-8, 1e-7, 1e-6, 1e-5]}])
         ]
         if SMOTE_FLAG:
             confusion_matrix_title = 'Test Confusion Matrix with SMOTE'
             roc_curve_title = 'Test ROC Curve with SMOTE'
             results_per_fold_title = 'results_per_fold_with_smote.csv'
             metric_values_title = 'metric_values_with_smote.csv'
+            best_config_title = 'best_configuration_with_smote.csv'
         elif UNDERSAMPLING:
             confusion_matrix_title = 'Test Confusion Matrix with Random Undersampling'
             roc_curve_title = 'Test ROC Curve with Random Undersampling'
             results_per_fold_title = 'results_per_fold_with_undersampling.csv'
             metric_values_title = 'metric_values_with_undersampling.csv'
+            best_config_title = 'best_configuration_with_undersampling.csv'
         else:
             print('No class weight or SMOTE applied')
             confusion_matrix_title = 'Test Confusion Matrix without Class Weight or SMOTE'
             roc_curve_title = 'Test ROC Curve without Class Weight or SMOTE'
             results_per_fold_title = 'results_per_fold_without_class_weight_or_SMOTE.csv'
             metric_values_title = 'metric_values_without_class_weight_or_SMOTE.csv'
+            best_config_title = 'best_configuration_without_class_weight_or_SMOTE.csv'
 
 
     results_per_fold, best_configuration, best_clf = nested_CV(X_train[selected_features], y_train, configurations, outer_k_folds=10, inner_k_folds=5)   
@@ -148,6 +152,8 @@ def main():
     results_per_fold.to_csv(results_per_fold_title, index=False)
 
     print(f'BEST CONFIGURATION: {best_configuration}')
+    best_config_df = pd.DataFrame([best_configuration])
+    best_config_df.to_csv(best_config_title, index=False)
 
     # Define metrics correctly
     score_metrics = {
