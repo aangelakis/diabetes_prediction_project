@@ -36,8 +36,7 @@ def plot_roc_curve(y_test, y_pred_proba, y_pred_trivial, title='ROC Curve'):
     plt.xlabel('False Positive Rate')
     # Set the y-axis label
     plt.ylabel('True Positive Rate')
-    # Set the title of the plot
-    plt.title(title)
+
     # Add a legend to the plot
     plt.legend()
     # Save the plot to a file
@@ -69,9 +68,6 @@ def plot_confusion_matrix(y_test, y_pred, title='Confusion Matrix'):
     plt.xlabel('Predicted')
     plt.ylabel('True')
 
-    # Add title
-    plt.title(title)
-
     if not os.path.exists('confusion_matrix'):
         os.makedirs('confusion_matrix')
     # Save the plot
@@ -84,37 +80,43 @@ def plot_confusion_matrix(y_test, y_pred, title='Confusion Matrix'):
     return cm 
 
 
-def plot_feature_importance(names, importances, title='Feature Importance'):
+def plot_feature_importance(model, feature_names, title='Feature Importance'):
     """
-    Plot the feature importances for a given set of feature names.
+    Plot the feature importance of a given model.
 
     Parameters
     ----------
-    names : list
-        The names of the features.
-    importances : list
-        The importances of the features.
+    model : object
+        Trained model with a `feature_importances_` attribute.
+    feature_names : list
+        List of feature names.
     title : str, optional
-        The title of the plot (default is 'Feature Importance').
+        Title of the plot (default is 'Feature Importance').
     """
-    # Create a DataFrame of feature names and importances
-    df = pd.DataFrame({'Feature': names, 'Importance': importances})
-    print(df.head())
-    # Sort the features by importance
-    df = df.sort_values('Importance', ascending=False)
-    # Plot the feature importances
-    plt.figure(figsize=(10, 6))
-    sns.barplot(x='Importance', y='Feature', data=df)
+    # Get the feature importances from the model
+    importances = model.feature_importances_
+
+    # Create a DataFrame with the feature names and importances
+    importance_df = pd.DataFrame({
+        'feature': feature_names,
+        'importance': importances
+    })
+
+    # Sort the DataFrame by importance
+    importance_df = importance_df.sort_values('importance', ascending=False)
+
+    # Create a bar plot of the feature importances
+    plt.figure(figsize=(12, 8))
+    sns.barplot(data=importance_df, x='importance', y='feature')
     plt.xlabel('Importance')
     plt.ylabel('Feature')
-    plt.title(title)
+    plt.grid(axis='x', linestyle='--', alpha=0.6)
     plt.tight_layout()
-    # Save the plot
-    if not os.path.exists('feature_importance'):
-        os.makedirs('feature_importance')
-    plt.savefig(f'feature_importance/{title}.png')
-    # Close the plot
+    plt.savefig(f'{title}.png')
     plt.close()
+    
+    # Return the DataFrame
+    return importance_df
 
 
 def plot_feature_selection(names, best_lasso_coef):
@@ -122,10 +124,9 @@ def plot_feature_selection(names, best_lasso_coef):
     # plotting the Column Names and Importance of Columns. 
     plt.figure(figsize=(12, 10))
     plt.bar(names, best_lasso_coef)
-    plt.xticks(rotation=45, ha='right', fontsize=12)
+    plt.xticks(rotation=25, ha='right', fontsize=12)
     plt.yticks(fontsize=12)
     plt.grid(axis='y', linestyle='--', alpha=0.6)
-    plt.title("Feature Selection Based on Lasso")
     plt.xlabel("Features")
     plt.ylabel("Importance")
     plt.ylim(0, 0.15)

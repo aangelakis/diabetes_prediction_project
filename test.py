@@ -144,13 +144,13 @@ def main():
             best_config_title = 'best_configuration_with_undersampling.csv'
             feautre_importance_title = 'feature_importance_with_undersampling'
         else:
-            print('No class weight or SMOTE applied')
-            confusion_matrix_title = 'Test Confusion Matrix without Class Weight or SMOTE'
-            roc_curve_title = 'Test ROC Curve without Class Weight or SMOTE'
-            results_per_fold_title = 'results_per_fold_without_class_weight_or_SMOTE.csv'
-            metric_values_title = 'metric_values_without_class_weight_or_SMOTE.csv'
-            best_config_title = 'best_configuration_without_class_weight_or_SMOTE.csv'
-            feautre_importance_title = 'feature_importance_without_class_weight_or_SMOTE'
+            print('No class weight or undersampling applied')
+            confusion_matrix_title = 'Test Confusion Matrix without Class Weight or undersampling'
+            roc_curve_title = 'Test ROC Curve without Class Weight or undersampling'
+            results_per_fold_title = 'results_per_fold_without_class_weight_or_undersampling.csv'
+            metric_values_title = 'metric_values_without_class_weight_or_undersampling.csv'
+            best_config_title = 'best_configuration_without_class_weight_or_undersampling.csv'
+            feautre_importance_title = 'feature_importance_without_class_weight_or_undersampling'
 
 
     results_per_fold, best_configuration, best_clf = nested_CV(X_train[selected_features], y_train, configurations, outer_k_folds=10, inner_k_folds=5)   

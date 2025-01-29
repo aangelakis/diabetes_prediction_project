@@ -1,0 +1,2 @@
+model,params,average_auc
+<class 'xgboost.sklearn.XGBClassifier'>,"{'learning_rate': 0.1, 'max_depth': 3, 'n_estimators': 200, 'scale_pos_weight': 10.82586410829281}",0.983102854550798
