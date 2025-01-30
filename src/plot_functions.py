@@ -18,35 +18,23 @@ def plot_roc_curve(y_test, y_pred_proba, y_pred_trivial, title='ROC Curve'):
         Predicted probabilities of the trivial classifier.
     title : str, optional
         Title of the plot (default is 'ROC Curve').
-
-    Returns
-    -------
-    None
     """
-    # Compute false positive rate and true positive rate for the classifier
     fpr, tpr, _ = roc_curve(y_test, y_pred_proba)
-    # Compute false positive rate and true positive rate for the trivial classifier
     fpr_trivial, tpr_trivial, _ = roc_curve(y_test, y_pred_trivial)
     
-    # Plot the ROC curve for the classifier
-    plt.plot(fpr, tpr, label='Classifier')
-    # Plot the ROC curve for the trivial classifier
-    plt.plot(fpr_trivial, tpr_trivial, linestyle='--', label='Trivial Classifier')
-    # Set the x-axis label
+    plt.figure(figsize=(8, 6))
+    plt.plot(fpr, tpr, label='Classifier', linewidth=2)
+    plt.plot(fpr_trivial, tpr_trivial, linestyle='--', label='Trivial Classifier', linewidth=2)
     plt.xlabel('False Positive Rate')
-    # Set the y-axis label
     plt.ylabel('True Positive Rate')
-
-    # Add a legend to the plot
+    plt.title(title)
     plt.legend()
-    # Save the plot to a file
-    if not os.path.exists('roc_curve'):
-        os.makedirs('roc_curve')
+    plt.grid(True, linestyle='--', alpha=0.6)
+    
+    os.makedirs('roc_curve', exist_ok=True)
     plt.savefig(f'roc_curve/{title}.png')
-    # Close the plot to free up memory
     plt.close()
-    
-    
+
 def plot_confusion_matrix(y_test, y_pred, title='Confusion Matrix'):
     """
     Plot the confusion matrix of the given true labels and predicted labels.
@@ -54,31 +42,23 @@ def plot_confusion_matrix(y_test, y_pred, title='Confusion Matrix'):
     Parameters
     ----------
     y_test : numpy array
-        True labels of the test set
+        True labels of the test set.
     y_pred : numpy array
-        Predicted labels of the test set
+        Predicted labels of the test set.
     """
-    # Compute the confusion matrix
     cm = confusion_matrix(y_test, y_pred)
-
-    # Plot the confusion matrix
-    sns.heatmap(cm, annot=True, fmt='d')
-
-    # Add axis labels
+    
+    plt.figure(figsize=(8, 6))
+    sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', linewidths=1, linecolor='black')
     plt.xlabel('Predicted')
     plt.ylabel('True')
-
-    if not os.path.exists('confusion_matrix'):
-        os.makedirs('confusion_matrix')
-    # Save the plot
+    plt.title(title)
+    
+    os.makedirs('confusion_matrix', exist_ok=True)
     plt.savefig(f'confusion_matrix/{title}.png')
-
-    # Close the plot
     plt.close()
-
-    # Return the confusion matrix
+    
     return cm 
-
 
 def plot_feature_importance(model, feature_names, title='Feature Importance'):
     """
@@ -93,43 +73,45 @@ def plot_feature_importance(model, feature_names, title='Feature Importance'):
     title : str, optional
         Title of the plot (default is 'Feature Importance').
     """
-    # Get the feature importances from the model
     importances = model.feature_importances_
-
-    # Create a DataFrame with the feature names and importances
-    importance_df = pd.DataFrame({
-        'feature': feature_names,
-        'importance': importances
-    })
-
-    # Sort the DataFrame by importance
+    
+    importance_df = pd.DataFrame({'feature': feature_names, 'importance': importances})
     importance_df = importance_df.sort_values('importance', ascending=False)
-
-    # Create a bar plot of the feature importances
+    
     plt.figure(figsize=(12, 8))
-    sns.barplot(data=importance_df, x='importance', y='feature')
+    sns.barplot(data=importance_df, x='importance', y='feature', palette='viridis')
     plt.xlabel('Importance')
     plt.ylabel('Feature')
+    plt.title(title)
     plt.grid(axis='x', linestyle='--', alpha=0.6)
     plt.tight_layout()
-    plt.savefig(f'{title}.png')
+    
+    os.makedirs('feature_importance', exist_ok=True)
+    plt.savefig(f'feature_importance/{title}.png')
     plt.close()
     
-    # Return the DataFrame
     return importance_df
 
+def plot_feature_selection(names, best_lasso_coef, title='LASSO Feature Selection'):
+    """
+    Plot the importance of selected features using LASSO.
 
-def plot_feature_selection(names, best_lasso_coef):
-
-    # plotting the Column Names and Importance of Columns. 
-    plt.figure(figsize=(12, 10))
-    plt.bar(names, best_lasso_coef)
-    plt.xticks(rotation=25, ha='right', fontsize=12)
-    plt.yticks(fontsize=12)
-    plt.grid(axis='y', linestyle='--', alpha=0.6)
-    plt.xlabel("Features")
-    plt.ylabel("Importance")
-    plt.ylim(0, 0.15)
-    plt.savefig('lasso_feature_selection.png')
+    Parameters
+    ----------
+    names : list
+        List of feature names.
+    best_lasso_coef : numpy array
+        Coefficients of the LASSO model.
+    title : str, optional
+        Title of the plot (default is 'LASSO Feature Selection').
+    """
+    plt.figure(figsize=(12, 8))
+    sns.barplot(x=best_lasso_coef, y=names, palette='coolwarm')
+    plt.xlabel("Importance")
+    plt.ylabel("Features")
+    plt.title(title)
+    plt.grid(axis='x', linestyle='--', alpha=0.6)
+    
+    os.makedirs('lasso_feature_selection', exist_ok=True)
+    plt.savefig(f'lasso_feature_selection/{title}.png')
     plt.close()
-

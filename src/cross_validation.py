@@ -7,34 +7,31 @@ from sklearn.metrics import (roc_auc_score, f1_score, precision_score,
                              balanced_accuracy_score, matthews_corrcoef,
                              make_scorer, accuracy_score)
 
-from trivial_model import trivial_train, trivial_predict
-from plot_functions import plot_confusion_matrix, plot_roc_curve
-
 def nested_CV(X, y, configurations, outer_k_folds=10, inner_k_folds=5):
     """
-    Perform nested cross-validation using scikit-learn's GridSearchCV for the inner loop.
+    Perform nested cross-validation with hyperparameter tuning.
 
     Parameters
     ----------
-    X : Pandas DataFrame or array-like
-        The feature set.
-    y : Pandas Series or array-like
-        The target labels.
+    X : pd.DataFrame or np.array
+        Feature set.
+    y : pd.Series or np.array
+        Target labels.
     configurations : list of tuples
-        A list where each tuple contains a model class and a dictionary of hyperparameters.
+        Each tuple contains a model class and a dictionary of hyperparameters.
     outer_k_folds : int, optional
-        The number of folds for the outer CV (default is 10).
+        Number of outer CV folds (default is 10).
     inner_k_folds : int, optional
-        The number of folds for the inner CV (default is 5).
+        Number of inner CV folds (default is 5).
 
     Returns
     -------
-    dict
-        A dictionary containing the best model, best parameters, and metrics per fold.
+    tuple
+        - results_df: DataFrame with results per fold.
+        - best_configuration: Dictionary with best model and hyperparameters.
+        - best_final_model: Best trained model on full dataset.
     """
-
     outer_cv = StratifiedKFold(n_splits=outer_k_folds, shuffle=True, random_state=42)
-
     scoring_metrics = {
         'roc_auc': 'roc_auc',
         'F1': make_scorer(f1_score),
@@ -46,29 +43,28 @@ def nested_CV(X, y, configurations, outer_k_folds=10, inner_k_folds=5):
         'accuracy': 'accuracy',
         'matthews_corrcoef': make_scorer(matthews_corrcoef),
     }
-
-    # Track all results per fold
+    
+    configurations = [
+        (model, [
+            {key: value for key, value in param_grid.items() if not (key == 'class_weight' or key == 'scale_pos_weight' and value is None)}
+            for param_grid in param_list
+        ])
+        for model, param_list in configurations
+    ]
+    
     results_per_fold = []
-
-    # Store the best overall configuration
-    best_configuration = {
-        'model': None,
-        'params': None,
-        'average_auc': -np.inf,
-    }
-
+    best_configuration = {'model': None, 'params': None, 'average_auc': -np.inf}
+    
     # Outer loop
     for fold_idx, (train_idx, test_idx) in enumerate(tqdm(outer_cv.split(X, y), desc="Outer folds", total=outer_k_folds)):
-        print('Fold:', fold_idx + 1)
+        print(f'Processing Fold {fold_idx + 1}/{outer_k_folds}...')
         X_train, X_test = X.iloc[train_idx], X.iloc[test_idx]
         y_train, y_test = y.iloc[train_idx], y.iloc[test_idx]
-
-        best_inner_model = None
-        best_inner_params = None
-        best_inner_metrics = None
+        
+        best_inner_model, best_inner_params, best_inner_metrics = None, None, None
         best_inner_auc = -np.inf
-
-        # Inner loop: hyperparameter tuning
+        
+        # Inner loop: Hyperparameter tuning
         for model, param_grid in configurations:
             inner_cv = StratifiedKFold(n_splits=inner_k_folds, shuffle=True, random_state=42)
             grid_search = GridSearchCV(
@@ -76,12 +72,12 @@ def nested_CV(X, y, configurations, outer_k_folds=10, inner_k_folds=5):
                 param_grid=param_grid,
                 cv=inner_cv,
                 scoring=scoring_metrics,
-                refit='roc_auc',  # Optimize for AUC
+                refit='roc_auc',
                 n_jobs=-1,
             )
             grid_search.fit(X_train, y_train)
-
-            # Retrieve best model & parameters from inner loop
+            
+            # Update best inner model based on AUC
             if grid_search.best_score_ > best_inner_auc:
                 best_inner_auc = grid_search.best_score_
                 best_inner_model = grid_search.best_estimator_
@@ -90,11 +86,11 @@ def nested_CV(X, y, configurations, outer_k_folds=10, inner_k_folds=5):
                     metric: np.max(grid_search.cv_results_[f'mean_test_{metric}']) 
                     for metric in scoring_metrics.keys()
                 }
-
-        # Evaluate the best model from inner loop on the outer test set
+        
+        # Evaluate best model from inner loop on outer test set
         y_pred_proba = best_inner_model.predict_proba(X_test)[:, 1]
         y_pred = best_inner_model.predict(X_test)
-
+        
         outer_metrics = {
             'roc_auc': roc_auc_score(y_test, y_pred_proba),
             'F1': f1_score(y_test, y_pred),
@@ -103,11 +99,11 @@ def nested_CV(X, y, configurations, outer_k_folds=10, inner_k_folds=5):
             'recall': recall_score(y_test, y_pred),
             'average_precision': average_precision_score(y_test, y_pred_proba),
             'balanced_accuracy': balanced_accuracy_score(y_test, y_pred),
-            'accuracy': best_inner_model.score(X_test, y_test),
+            'accuracy': accuracy_score(y_test, y_pred),
             'matthews_corrcoef': matthews_corrcoef(y_test, y_pred),
         }
-
-        # Store fold results
+        
+        # Store results for this fold
         results_per_fold.append({
             'fold': fold_idx + 1,
             'model': best_inner_model.__class__.__name__,
@@ -115,25 +111,28 @@ def nested_CV(X, y, configurations, outer_k_folds=10, inner_k_folds=5):
             'inner_cv_metrics': best_inner_metrics,
             'outer_test_metrics': outer_metrics
         })
-
-        # Update the best configuration
+        
+        # Update best overall configuration
         if outer_metrics['roc_auc'] > best_configuration['average_auc']:
-            best_configuration['model'] = best_inner_model.__class__
-            best_configuration['params'] = best_inner_params
-            best_configuration['average_auc'] = outer_metrics['roc_auc']
-
-        print('Finished fold:', fold_idx + 1)
-    # Create a DataFrame of results
+            best_configuration.update({
+                'model': best_inner_model.__class__,
+                'params': best_inner_params,
+                'average_auc': outer_metrics['roc_auc'],
+            })
+        
+        print(f'Completed Fold {fold_idx + 1}')
+    
+    # Convert results to DataFrame
     results_df = pd.DataFrame(results_per_fold)
     
-    # Print summary
+    # Print best model summary
     print("\nBest Model Configuration Across Outer Folds:")
     print(f"  Model: {best_configuration['model'].__name__}")
     print(f"  Parameters: {best_configuration['params']}")
     print(f"  Average AUC: {best_configuration['average_auc']:.3f}")
-
+    
     # Train final model on full dataset
-    best_clf = best_configuration['model'](**best_configuration['params'])
-    best_clf.fit(X, y)
-
-    return results_df, best_configuration, best_clf
+    best_final_model = best_configuration['model'](**best_configuration['params'])
+    best_final_model.fit(X, y)
+    
+    return results_df, best_configuration, best_final_model
